@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Categorías - CRUD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-50 font-sans" x-data="gestorApp()">
+
+    <nav class="bg-indigo-600 p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center text-white">
+            <h1 class="text-xl font-bold italic">CatistApp CRUD</h1>
+            <span class="text-sm opacity-75">Flask + Tailwind + Alpine</span>
+        </div>
+    </nav>
+
+    <main class="container mx-auto mt-8 p-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-bold mb-4 flex items-center text-gray-700">
+                    <span class="bg-indigo-100 text-indigo-600 p-2 rounded-lg mr-2 italic">#</span> 
+                    Categorías
+                </h2>
+                
+                <div class="flex gap-2 mb-6">
+                    <input type="text" x-model="nuevaCat" placeholder="Nueva categoría..." 
+                           class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
+                    <button @click="agregarCategoria()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 font-bold">+</button>
+                </div>
+
+                <ul class="space-y-2">
+                    <template x-for="(cat, index) in categorias" :key="index">
+                        <li class="flex justify-between items-center bg-gray-50 p-3 rounded-lg group">
+                            <span x-text="cat" class="font-medium text-gray-600"></span>
+                            <!-- <button @click="eliminarCategoria(index)" class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Borrar
+                            </button> -->
+                        </li>
+                    </template>
+                </ul>
+            </section>
+
+            <section class="lg:col-span-2 space-y-6">
+                
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-bold mb-4 text-gray-700 italic underline decoration-indigo-300">Agregar Nuevo Item</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input type="text" x-model="nuevoItemNombre" placeholder="Nombre del objeto..." class="p-2 border rounded-lg">
+                        <select x-model="nuevoItemCat" class="p-2 border rounded-lg">
+                            <option value="">Selecciona Categoría</option>
+                            <template x-for="cat in categorias">
+                                <option :value="cat" x-text="cat"></option>
+                            </template>
+                        </select>
+                        <button @click="agregarItem()" class="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 font-bold">
+                            Guardar Item
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-bold text-gray-700">Listado de Elementos</h2>
+                        <select x-model="filtro" class="p-2 border rounded-lg text-sm bg-gray-50">
+                            <option value="todos">Todas las categorías</option>
+                            <template x-for="cat in categorias">
+                                <option :value="cat" x-text="'Filtrar por: ' + cat"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <template x-for="(item, index) in itemsFiltrados" :key="index">
+                            <div class="border p-4 rounded-lg flex justify-between items-center hover:border-indigo-300 transition-colors">
+                                <div>
+                                    <p class="font-bold text-gray-800" x-text="item.nombre"></p>
+                                    <span class="text-xs font-semibold px-2 py-1 bg-indigo-100 text-indigo-600 rounded-full" x-text="item.categoria"></span>
+                                </div>
+                                <button @click="eliminarItem(item.id)" class="text-gray-300 hover:text-red-500">
+                                    &times;
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                    
+                    <div x-show="itemsFiltrados.length === 0" class="text-center py-10 text-gray-400">
+                        No hay elementos para mostrar.
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+   <script>
+    function gestorApp() {
+        return {
+            // 1. Variables de Estado
+            categorias: [], 
+            items: [], 
+            nuevaCat: '',
+            nuevoItemNombre: '',
+            nuevoItemCat: '',
+            filtro: 'todos',
+
+            // 2. Inicialización (Se ejecuta al cargar la página)
+            init() {
+                // Cargar categorías desde Flask (Jinja)
+                this.categorias = [
+                    {% for cat in categorias %}
+                    '{{ cat.nombre }}',
+                    {% endfor %}
+                ];
+                
+                // Cargar items desde Flask (Jinja)
+                this.items = [
+                    {% for item in items %}
+                    { 
+                        id: {{ item.id }}, 
+                        nombre: '{{ item.nombre }}', 
+                        categoria: '{{ item.categoria.nombre if item.categoria else "Sin Categoría" }}' 
+                    },
+                    {% endfor %}
+                ];
+                console.log("Datos cargados:", this.items);
+            },
+
+            // 3. Agregar Categoría
+            async agregarCategoria() {
+                // El alert ahora sí debería funcionar
+                alert("Intentando agregar: " + this.nuevaCat);
+
+                if (this.nuevaCat.trim()) {
+                    const res = await fetch('/api/categorias', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nombre: this.nuevaCat })
+                    });
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        if (!this.categorias.includes(data.nombre)) {
+                            this.categorias.push(data.nombre);
+                        }
+                        this.nuevaCat = '';
+                    }
+                }
+            },
+
+            // 4. Agregar Item
+            async agregarItem() {
+                if (this.nuevoItemNombre && this.nuevoItemCat) {
+                    const response = await fetch('/api/items', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            nombre: this.nuevoItemNombre,
+                            categoria: this.nuevoItemCat
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.items.push({
+                            id: data.id,
+                            nombre: this.nuevoItemNombre,
+                            categoria: this.nuevoItemCat
+                        });
+                        this.nuevoItemNombre = '';
+                        this.nuevoItemCat = '';
+                    }
+                }
+            },
+
+            // 5. Eliminar Item
+            async eliminarItem(id) {
+    // 1. Pedir confirmación (opcional pero recomendado)
+    if (!confirm("¿Estás seguro de eliminar este item?")) return;
+
+    // 2. Llamar a la API de Flask
+    const response = await fetch(`/api/items/${id}`, {
+        method: 'DELETE'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+        // 3. Si Flask borró el registro, lo quitamos de la pantalla
+        this.items = this.items.filter(i => i.id !== id);
+    } else {
+        alert("Error al borrar el item de la base de datos.");
+    }
+},
+
+            // 6. Lógica de Filtro
+            get itemsFiltrados() {
+                if (this.filtro === 'todos') return this.items;
+                return this.items.filter(i => i.categoria === this.filtro);
+            }
+        }
+    }
+</script>
+</body>
+</html>
