@@ -1,23 +1,28 @@
-from . import db
+from . import db, login_manager
+from flask_login import UserMixin
 
-# Tabla de asociación entre Usuarios y Categorías
-usuario_categorias = db.Table('usuario_categorias',
-    db.Column('usuario_id', db.String(50), db.ForeignKey('categoria.usuario_creador')), # Simplificado para el ejemplo
-    db.Column('categoria_id', db.Integer, db.ForeignKey('categoria.id')),
-    db.Column('user_string_id', db.String(50)) # El ID estático que usas
-)
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True ) # ID estático para el ejemplo
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
 
 class Categoria(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(50), unique=True, nullable=False) # Única para que se "recicle"
-    # El usuario_creador es informativo, pero la categoría puede ser usada por otros
-    usuario_creador = db.Column(db.String(50))
+    nombre = db.Column(db.String(100), nullable=False)
+
+class Lista(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    cat_id = db.Column(db.Integer, db.ForeignKey('categoria.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    list_id = db.Column(db.Integer, db.ForeignKey('lista.id'), nullable=False)
     nombre = db.Column(db.String(100), nullable=False)
-    usuario_id = db.Column(db.String(50), nullable=False)
-    categoria_id = db.Column(db.Integer, db.ForeignKey('categoria.id'))
-    
-    # Relación para acceder fácilmente al nombre de la categoría
-    categoria = db.relationship('Categoria', backref='items')
+    descripcion = db.Column(db.String(200), nullable=True)
+    fecha_creacion = db.Column(db.DateTime, nullable=False)
+    imagen_url = db.Column(db.String(200), nullable=True)
