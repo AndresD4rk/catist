@@ -16,20 +16,27 @@ def index():
 @login_required
 def catist_page():
     cat = Categoria.query.all()
-    categorias_nombres = [c.nombre for c in cat]
+    categorias_json = [{"id": c.id, "nombre": c.nombre} for c in cat]
     mis_listas = Lista.query.filter_by(user_id=current_user.id).all()
+    lista_ids = [lista.id for lista in mis_listas]
     if not mis_listas: 
-        print(f"No se encontraron listas para el usuario actual. Categorías disponibles: {categorias_nombres}")
-        return render_template('catist.html', listas_json=json.dumps(categorias_nombres))
-    mis_items = Item.query.filter_by(list_id=mis_listas[0].id).all()
+        # print(f"No se encontraron listas para el usuario actual. Categorías disponibles: {categorias_nombres}")
+        return render_template('catist.html', categorias=categorias_json)
+    else:
+        mis_items = Item.query.join(Item.lista).join(Lista.categoria).filter(Item.list_id.in_(lista_ids)).all()
+        #mis_items = Lista.query.filter(Lista.user_id == current_user.id).all()
+    
+
 
     # print("--- DEBUG CATIST ---")
     # print(f"Listas encontradas: {mis_listas}")
-    # print(f"Items encontrados: {mis_items}")
+    print(f"Items encontrados: {mis_items}")
     # print(f"Categorías disponibles: {categorias_nombres}")
-    return render_template('catist.html', listas=mis_listas, items=mis_items,categorias=categorias_nombres) 
 
-@main.route('/api/categorias', methods=['POST'])
+    return render_template('catist.html', listas=mis_listas, items=[item.to_dict() for item in mis_items], categorias=categorias_json) 
+    #return render_template('catist.html', listas=mis_listas, categorias=categorias_nombres) 
+
+"""@main.route('/api/categorias', methods=['POST'])
 def agregar_categoria():
     data = request.get_json()
     nombre_cat = data['nombre'].strip()
@@ -45,7 +52,7 @@ def agregar_categoria():
     
     return jsonify({"success": True, "id": categoria.id, "nombre": categoria.nombre})
 
-@main.route('/api/items', methods=['POST'])
+ @main.route('/api/items', methods=['POST'])
 def agregar_item():
     data = request.get_json()
     # Buscamos la categoría por nombre (la que seleccionó el usuario)
@@ -67,7 +74,7 @@ def eliminar_item(id):
         db.session.delete(item)
         db.session.commit()
         return jsonify({"success": True})
-    return jsonify({"success": False}), 403
+    return jsonify({"success": False}), 403 """
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():

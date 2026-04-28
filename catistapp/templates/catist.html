@@ -55,7 +55,7 @@
                         <template x-for="(cat, index) in categorias" :key="index">
 
                             <li class="flex justify-between items-center bg-gray-50 p-3 rounded-lg group">
-                                <span x-text="cat" class="font-medium text-gray-600"></span>
+                                <span x-value="cat.id" x-text="cat.nombre" class="font-medium text-gray-600"></span>
                                 <!-- <button @click="eliminarCategoria(index)" class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
                                 Borrar
                             </button> -->
@@ -76,14 +76,14 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <input type="text" x-model="nuevoItemNombre" placeholder="Nombre del objeto..."
                             class="p-2 border rounded-lg">
-                            <input type="text" x-model="nuevoItemDescripcion" placeholder="Descripción del objeto..."
+                        <input type="text" x-model="nuevoItemDescripcion" placeholder="Descripción del objeto..."
                             class="p-2 border rounded-lg">
-                            <input type="text" x-model="nuevoItemImagen" placeholder="URL de la imagen (opcional)"
+                        <input type="text" x-model="nuevoItemImagen" placeholder="URL de la imagen (opcional)"
                             class="p-2 border rounded-lg">
                         <select x-model="nuevoItemCat" class="p-2 border rounded-lg">
                             <option value="">Selecciona Categoría</option>
-                            <template x-for="cat in categorias">
-                                <option :value="cat" x-text="cat"></option>
+                            <template x-for="(cat, index) in categorias" :key="index">
+                                <option :value="cat.id" x-text="cat.nombre"></option>
                             </template>
                         </select>
                         <button @click="agregarItem()"
@@ -93,70 +93,53 @@
                     </div>
                 </div>
 
+                <div x-data="{
+                            items: {{ items}},
+                        categorias: {{ categorias}},
+                        filtro: 'todos',
+
+                        get itemsFiltrados() {
+                            if (this.filtro === 'todos') {
+                                return this.items;
+                            }                                                        
+                            return this.items.filter(item => {return item.categoria === this.filtro});
+                        }}">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-lg font-bold text-gray-700">Listado de Elementos</h2>
                         <select x-model="filtro" class="p-2 border rounded-lg text-sm bg-gray-50">
                             <option value="todos">Todas las categorías</option>
-                            <template x-for="cat in categorias">
-                                <option :value="cat" x-text="'Filtrar por: ' + cat"></option>
+                            <template x-for="(cat, index) in categorias" :key="index">
+                                <option :value="cat.nombre" x-text="'Filtrar por: ' + cat.nombre"></option>
                             </template>
                         </select>
                     </div>
 
                     <div class="min-h-screen bg-slate-950 p-8">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-
-                            <div class="bg-[#1e293b] rounded-xl shadow-lg overflow-hidden border border-slate-700">
-                                <div class="p-6 flex items-start justify-between">
-                                    <div class="space-y-1">
-                                        <div class="flex items-center gap-2">
-                                            <h3 class="text-white font-semibold text-lg">Jane Cooper</h3>
-                                            <span
-                                                class="bg-green-900/30 text-green-400 text-xs font-medium px-2.5 py-0.5 rounded-full border border-green-800/50">Admin</span>
-                                        </div>
-                                        <p class="text-slate-400 text-sm">Regional Paradigm Technician</p>
-                                    </div>
-                                    <img class="w-12 h-12 rounded-full object-cover border-2 border-slate-700"
-                                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150"
-                                        alt="Avatar">
-                                </div>
-
-                                <div class="flex border-t border-slate-700">
-                                    <button
-                                        class="flex-1 flex items-center justify-center gap-2 py-4 text-white hover:bg-slate-800 transition-colors border-r border-slate-700">
-                                        <svg class="w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path
-                                                d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z">
-                                            </path>
-                                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
-                                        </svg>
-                                        <span class="font-medium">Email</span>
-                                    </button>
-                                    <button
-                                        class="flex-1 flex items-center justify-center gap-2 py-4 text-white hover:bg-slate-800 transition-colors">
-                                        <svg class="w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path
-                                                d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z">
-                                            </path>
-                                        </svg>
-                                        <span class="font-medium">Call</span>
-                                    </button>
-                                </div>
+                        <template x-for="(item, index) in itemsFiltrados" :key="item.id">
+                            <div class="bg-gray-800 text-white p-4 rounded-lg mb-4">
+                                <h3 class="text-xl font-bold mb-2" x-text="item.nombre"></h3>
+                                <p class="mb-2" x-text="item.descripcion"></p>
+                                <p class="text-sm italic text-gray-400 mb-2" x-text="'Categoría: ' + item.categoria">
+                                </p>
+                                <template x-if="item.imagen">
+                                    <img :src="item.imagen" alt="Imagen del item" class="w-full h-auto rounded-lg">
+                                </template>
                             </div>
 
-
-                        </div>
+                        </template>
                     </div>
+                </div>
+                </div>
 </body>
 <script>
     function gestorApp() {
         return {
             nuevaCat: '',
-            nuevoItemNombre:'',
-            nuevoItemCat:'',
-            nuevoItemDescripcion:'',
-            nuevoItemImagen:'',
+            nuevoItemNombre: '',
+            nuevoItemCat: '',
+            nuevoItemDescripcion: '',
+            nuevoItemImagen: '',
             lista: [], // Tu lista de categorías actual
 
             async agregarCategoria() {
@@ -175,8 +158,9 @@
                     if (response.ok) {
                         const data = await response.json();
                         // Añadimos el nuevo objeto a la lista local para que se vea al instante
-                        this.categorias.push(this.nuevaCat);
-                        this.nuevaCat = ''; // Limpiamos el input
+                        // this.categorias.push(this.nuevaCat);
+                        // this.nuevaCat = ''; // Limpiamos el input
+                        window.location.reload();
                     }
                 } catch (error) {
                     console.error("Error al guardar:", error);
@@ -200,17 +184,18 @@
                             nombre: this.nuevoItemNombre,
                             categoria: this.nuevoItemCat,
                             descripcion: this.nuevoItemDescripcion,
-                            imagen: this.nuevoItemImagen    
+                            imagen: this.nuevoItemImagen
                         })
                     });
 
                     if (response.ok) {
                         const data = await response.json();
                         // Aquí podrías agregar el nuevo item a una lista local si quieres mostrarlo al instante
-                        this.nuevoItemNombre = ''; // Limpiamos el input
-                        this.nuevoItemCat = ''; // Reseteamos el select
-                        this.nuevoItemDescripcion = '';
-                        this.nuevoItemImagen = '';                      
+                        window.location.reload();
+                        // this.nuevoItemNombre = ''; // Limpiamos el input
+                        // this.nuevoItemCat = ''; // Reseteamos el select
+                        // this.nuevoItemDescripcion = '';
+                        // this.nuevoItemImagen = '';
                     }
                 } catch (error) {
                     console.error("Error al guardar el item:", error);
